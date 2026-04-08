@@ -6,12 +6,12 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#ffffff">
-  <link rel="manifest" href="/manifest-zigor.json">
+  <link rel="manifest" href="/manifest-benat.json">
   <link rel="apple-touch-icon" href="/icon-180.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Fichajes">
-  <title>Fichaje – Zigor</title>
+  <title>Fichaje – Beñat</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -152,7 +152,7 @@
   <div class="header">
     <div class="clock" id="clock">--:--</div>
     <div class="fecha" id="fecha"></div>
-    <div class="nombre">Zigor</div>
+    <div class="nombre">Beñat</div>
   </div>
 
   <!-- Progreso -->
@@ -196,7 +196,7 @@
   <!-- Jornada completa -->
   <div id="jornada-ok" style="display:none;" class="card jornada-ok">
     <div class="jornada-ok-titulo">Jornada completada</div>
-    <div class="jornada-ok-sub">Hasta mañana, Zigor</div>
+    <div class="jornada-ok-sub">Hasta mañana, Beñat</div>
   </div>
 
   <!-- Timeline -->
@@ -219,7 +219,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const OPERARIO   = 'Zigor';
+const OPERARIO   = 'Beñat';
 const SUPABASE_URL = 'https://yinncmybxzxdkmwjnahu.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_u2DKyKiGDSD_r5l3LGUZYA_QKIUx6fu';
 
@@ -439,25 +439,25 @@ function exportar(){
   const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');
-  a.href=url; a.download='fichajes_zigor_'+fechaKey()+'.csv'; a.click();
+  a.href=url; a.download='fichajes_benat_'+fechaKey()+'.csv'; a.click();
   URL.revokeObjectURL(url);
 }
 
 // ── Persistencia local ────────────────────────────────────────
 function guardarLocal(){
   try{
-    localStorage.setItem('fich_paso_zigor', String(paso));
-    localStorage.setItem('fich_registros_zigor', JSON.stringify(registros));
-    localStorage.setItem('fich_pendientes_zigor', JSON.stringify(pendientes));
+    localStorage.setItem('fich_paso_benat', String(paso));
+    localStorage.setItem('fich_registros_benat', JSON.stringify(registros));
+    localStorage.setItem('fich_pendientes_benat', JSON.stringify(pendientes));
   }catch(e){}
 }
 
 function cargarLocal(){
   todayKey=fechaKey();
   try{
-    const raw=localStorage.getItem('fich_registros_zigor');
+    const raw=localStorage.getItem('fich_registros_benat');
     if(raw) registros=JSON.parse(raw);
-    const rawP=localStorage.getItem('fich_pendientes_zigor');
+    const rawP=localStorage.getItem('fich_pendientes_benat');
     if(rawP) pendientes=JSON.parse(rawP);
     const hoy=registros.filter(r=>r.fecha===todayKey);
     paso=Math.min(hoy.length,4);
