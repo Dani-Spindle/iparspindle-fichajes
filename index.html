@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fichajes – Ipar Spindle</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f7f6f2; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .wrap { text-align: center; padding: 2rem; }
+    .titulo { font-size: 22px; font-weight: 600; color: #1a1a18; margin-bottom: 6px; }
+    .sub { font-size: 15px; color: #6b6b66; margin-bottom: 2.5rem; }
+    .cards { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .card {
+      display: block; text-decoration: none;
+      background: #fff; border: 1px solid #e2e2de; border-radius: 16px;
+      padding: 2rem 2.5rem; transition: border-color .2s, transform .15s;
+      min-width: 160px;
+    }
+    .card:hover { border-color: #aaa; transform: translateY(-2px); }
+    .avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; font-weight: 700; margin: 0 auto 1rem;
+    }
+    .av-benat { background: #E6F1FB; color: #0C447C; }
+    .av-zigor { background: #E1F5EE; color: #085041; }
+    .card-nombre { font-size: 18px; font-weight: 600; color: #1a1a18; }
+    .card-label { font-size: 13px; color: #6b6b66; margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="titulo">Fichajes</div>
+    <div class="sub">Selecciona tu perfil</div>
+    <div class="cards">
+      <a class="card" href="/benat.html">
+        <div class="avatar av-benat">B</div>
+        <div class="card-nombre">Beñat</div>
+        <div class="card-label">Registrar jornada</div>
+      </a>
+      <a class="card" href="/zigor.html">
+        <div class="avatar av-zigor">Z</div>
+        <div class="card-nombre">Zigor</div>
+        <div class="card-label">Registrar jornada</div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
