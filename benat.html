@@ -6,6 +6,11 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="/manifest-benat.json">
+  <link rel="apple-touch-icon" href="/icon-180.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Fichajes">
   <title>Fichaje – Beñat</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -181,7 +186,7 @@
       <div class="gps-dot buscando" id="gps-dot"></div>
       <span id="gps-texto">Obteniendo ubicación...</span>
     </div>
-    <button class="btn-fichar btn-entrada" id="btn-fichar" onclick="fichar()">Registrar entrada</button>
+    <button class="btn-fichar btn-entrada" id="btn-fichar">Registrar entrada</button>
     <div class="sync-row">
       <div class="sync-dot" id="sync-dot"></div>
       <span id="sync-texto">Sin registros aún</span>
@@ -256,19 +261,24 @@ function tick(){
 }
 
 // ── GPS ──────────────────────────────────────────────────────
-function iniciarGPS(){
+function obtenerGPS(onResult){
   const dot=document.getElementById('gps-dot');
   const txt=document.getElementById('gps-texto');
   dot.className='gps-dot buscando';
   txt.textContent='Obteniendo ubicación...';
-  if(!navigator.geolocation){ dot.className='gps-dot'; txt.textContent='GPS no disponible'; return; }
+  if(!navigator.geolocation){
+    dot.className='gps-dot'; txt.textContent='GPS no disponible';
+    onResult(null); return;
+  }
   navigator.geolocation.getCurrentPosition(pos=>{
-    gpsCoords={ lat:parseFloat(pos.coords.latitude.toFixed(5)), lng:parseFloat(pos.coords.longitude.toFixed(5)), acc:Math.round(pos.coords.accuracy) };
+    const coords={ lat:parseFloat(pos.coords.latitude.toFixed(5)), lng:parseFloat(pos.coords.longitude.toFixed(5)), acc:Math.round(pos.coords.accuracy) };
     dot.className='gps-dot ok';
-    txt.textContent=gpsCoords.lat+', '+gpsCoords.lng+' (±'+gpsCoords.acc+'m)';
-  },()=>{
-    dot.className='gps-dot'; gpsCoords=null;
-    txt.textContent='Sin GPS — se registrará sin ubicación';
+    txt.textContent=coords.lat+', '+coords.lng+' (±'+coords.acc+'m)';
+    onResult(coords);
+  },err=>{
+    dot.className='gps-dot';
+    txt.textContent='Sin GPS (error '+err.code+') — registrado sin ubicación';
+    onResult(null);
   },{enableHighAccuracy:true,timeout:12000,maximumAge:0});
 }
 
@@ -353,7 +363,6 @@ function actualizarBoton(){
   btn.className='btn-fichar '+BTN_CLASES[paso];
   btn.textContent=LABELS_BTN[paso];
   document.getElementById('accion-titulo').textContent=LABELS_TIT[paso];
-  iniciarGPS();
 }
 
 // ── Timeline ─────────────────────────────────────────────────
@@ -389,33 +398,36 @@ function renderTimeline(){
 }
 
 // ── Fichar ────────────────────────────────────────────────────
-async function fichar(){
+function fichar(){
   if(paso>=4) return;
   const btn=document.getElementById('btn-fichar');
   btn.disabled=true;
-  const d=new Date();
-  const reg={
-    operario: OPERARIO,
-    paso:     paso,
-    accion:   ACCIONES[paso],
-    fecha:    fechaKey(),
-    hora:     fmtHora(d.getTime()),
-    ts:       d.getTime(),
-    lat:      gpsCoords?gpsCoords.lat:null,
-    lng:      gpsCoords?gpsCoords.lng:null,
-    acc:      gpsCoords?gpsCoords.acc:null
-  };
-  registros.push(reg);
-  paso++;
-  guardarLocal();
-  actualizarProgreso();
-  actualizarBoton();
-  renderTimeline();
-  showToast(TL_NOMBRES[reg.paso]+' registrada');
-  const ok=await enviarSupabase(reg);
-  if(!ok){ pendientes.push(reg); guardarLocal(); }
-  setTimeout(()=>{ if(btn&&!btn.disabled) btn.disabled=false; },1000);
-  if(paso<4) btn.disabled=false;
+  const pasoActual=paso;
+  obtenerGPS(function(coords){
+    const d=new Date();
+    const reg={
+      operario: OPERARIO,
+      paso:     pasoActual,
+      accion:   ACCIONES[pasoActual],
+      fecha:    fechaKey(),
+      hora:     fmtHora(d.getTime()),
+      ts:       d.getTime(),
+      lat:      coords?coords.lat:null,
+      lng:      coords?coords.lng:null,
+      acc:      coords?coords.acc:null
+    };
+    registros.push(reg);
+    paso++;
+    guardarLocal();
+    actualizarProgreso();
+    actualizarBoton();
+    renderTimeline();
+    showToast(TL_NOMBRES[reg.paso]+' registrada');
+    enviarSupabase(reg).then(ok=>{
+      if(!ok){ pendientes.push(reg); guardarLocal(); }
+    });
+    if(paso<4) btn.disabled=false;
+  });
 }
 
 // ── Exportar CSV ─────────────────────────────────────────────
@@ -463,8 +475,11 @@ function cargarLocal(){
 tick();
 setInterval(tick,1000);
 cargarLocal();
-// Intentar sincronizar pendientes al recuperar conexión
 window.addEventListener('online', sincronizarPendientes);
+document.getElementById('btn-fichar').addEventListener('click', function(e){
+  e.preventDefault();
+  fichar();
+}, {passive: false});
 </script>
 </body>
 </html>
