@@ -1,1 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPAR Spindle · Panel Fichajes</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Barlow+Condensed:wght@300;600;700;900&display=swap');
 
+  :root {
+    --bg: #0d0f14;
+    --surface: #161a22;
+    --border: #252a35;
+    --accent: #e8532a;
+    --accent2: #f0a500;
+    --text: #e8eaf0;
+    --muted: #5a6070;
+    --green: #2ecc71;
+    --blue: #3498db;
+    --purple: #9b59b6;
+    --red: #e74c3c;
+    --yellow: #f39c12;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Barlow Condensed', sans-serif; min-height: 100vh; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 28px; border-bottom: 1px solid var(--border); background: var(--surface);
+  }
+  .logo { font-size: 22px; font-weight: 900; letter-spacing: 2px; color: var(--accent); }
+  .logo span { color: var(--text); }
+  .header-right { display: flex; align-items: center; gap: 14px; }
+
+  .filters {
+    display: flex; gap: 12px; padding: 18px 28px;
+    background: var(--surface); border-bottom: 1px solid var(--border);
+    flex-wrap: wrap; align-items: flex-end;
+  }
+  .filter-group { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 11px; letter-spacing: 1.5px; color: var(--muted); font-weight: 600; text-transform: uppercase; }
+
+  input[type="text"], input[type="date"], select {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 12px; font-family: 'DM Mono', monospace; font-size: 13px;
+    border-radius: 4px; outline: none; transition: border-color 0.2s; min-width: 130px;
+  }
+  input:focus, select:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 9px 20px; border: none; border-radius: 4px; cursor: pointer;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px;
+    letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #d4441e; transform: translateY(-1px); }
+  .btn-excel { background: #1a7a4a; color: white; }
+  .btn-excel:hover { background: #15643d; transform: translateY(-1px); }
+  .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  .stats-bar { display: flex; gap: 1px; background: var(--border); border-bottom: 1px solid var(--border); }
+  .stat { flex: 1; background: var(--surface); padding: 16px 20px; display: flex; flex-direction: column; gap: 4px; }
+  .stat-label { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; font-weight: 600; }
+  .stat-value { font-family: 'DM Mono', monospace; font-size: 24px; font-weight: 500; color: var(--text); }
+  .stat-value.orange { color: var(--accent); }
+  .stat-value.green  { color: var(--green); }
+  .stat-value.blue   { color: var(--blue); }
+  .stat-value.yellow { color: var(--yellow); }
+
+  .view-toggle { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; }
+  .view-btn { padding: 7px 14px; border: none; background: transparent; color: var(--muted); cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s; }
+  .view-btn.active { background: var(--accent); color: white; }
+
+  /* TABLA */
+  .table-container { padding: 24px 28px; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th {
+    text-align: left; padding: 10px 14px; font-size: 10px; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border);
+    font-weight: 600; cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  thead th:hover { color: var(--accent); }
+  thead th.sort-asc::after  { content: ' ↑'; color: var(--accent); }
+  thead th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: rgba(232, 83, 42, 0.04); }
+  tbody tr.fila-aviso { background: rgba(243, 156, 18, 0.06); }
+  tbody tr.fila-aviso:hover { background: rgba(243, 156, 18, 0.1); }
+  tbody td { padding: 11px 14px; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); }
+
+  .operario-badge {
+    display: inline-block; padding: 3px 10px; border-radius: 3px;
+    font-size: 12px; letter-spacing: 1px; text-transform: uppercase; font-weight: 700;
+    font-family: 'Barlow Condensed', sans-serif;
+    background: rgba(240,165,0,0.12); color: var(--accent2);
+  }
+  .horas-cell { color: var(--green); font-weight: 500; }
+  .hora-cell  { color: var(--text); }
+  .fecha-cell { color: var(--muted); font-size: 12px; }
+
+  .aviso-badge {
+    display: inline-block; padding: 3px 8px; border-radius: 3px;
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600;
+    font-family: 'Barlow Condensed', sans-serif;
+    background: rgba(243,156,18,0.15); color: var(--yellow);
+  }
+
+  .lugar-badge {
+    display: inline-block; padding: 2px 7px; border-radius: 3px;
+    font-size: 10px; font-weight: 600; font-family: 'Barlow Condensed', sans-serif;
+    letter-spacing: 0.5px; cursor: pointer; text-decoration: none;
+  }
+  .lugar-ipar  { background: rgba(46,204,113,0.12); color: var(--green); }
+  .lugar-fuera { background: rgba(231,76,60,0.15);  color: var(--red); }
+  .lugar-nd    { background: rgba(90,96,112,0.2);   color: var(--muted); }
+
+  /* RESUMEN POR OPERARIO */
+  .resumen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; padding: 24px 28px; }
+
+  .operario-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 20px; transition: border-color 0.2s;
+  }
+  .operario-card:hover { border-color: var(--accent); }
+
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+  .card-nombre { font-size: 26px; font-weight: 900; color: var(--text); letter-spacing: 1px; }
+  .card-total  { font-family: 'DM Mono', monospace; font-size: 28px; color: var(--green); font-weight: 500; text-align: right; }
+  .card-total-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; text-align: right; }
+
+  .card-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .card-stat { background: var(--bg); border-radius: 4px; padding: 10px 12px; }
+  .card-stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .card-stat-val { font-family: 'DM Mono', monospace; font-size: 18px; color: var(--text); }
+  .card-stat-val.warn { color: var(--yellow); }
+  .card-stat-val.red  { color: var(--red); }
+
+  .card-chart { margin-top: 4px; }
+  .chart-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .chart-bar-wrap { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
+  .chart-day { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); width: 75px; }
+  .chart-bar-bg { flex: 1; background: var(--border); border-radius: 2px; height: 6px; overflow: hidden; }
+  .chart-bar-fill { height: 100%; border-radius: 2px; background: var(--green); transition: width 0.4s; }
+  .chart-bar-fill.warn { background: var(--yellow); }
+  .chart-val { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); width: 45px; text-align: right; }
+
+  .status-msg { text-align: center; padding: 60px; color: var(--muted); font-size: 16px; letter-spacing: 1px; }
+  .status-msg span { display: block; font-size: 36px; margin-bottom: 12px; }
+
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">IPAR<span>·</span>SPINDLE <span style="font-size:14px;color:var(--muted);font-weight:300;letter-spacing:1px">FICHAJES</span></div>
+  <div class="header-right">
+    <div class="view-toggle">
+      <button class="view-btn active" onclick="setView('dias', this)">Por Día</button>
+      <button class="view-btn" onclick="setView('operarios', this)">Por Operario</button>
+    </div>
+    <button class="btn btn-excel" onclick="exportarExcel()">⬇ Exportar Excel</button>
+  </div>
+</header>
+
+<div class="filters">
+  <div class="filter-group">
+    <label>Operario</label>
+    <select id="f-operario" onchange="filtrar()">
+      <option value="">Todos</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Desde</label>
+    <input type="date" id="f-desde" onchange="filtrar()">
+  </div>
+  <div class="filter-group">
+    <label>Hasta</label>
+    <input type="date" id="f-hasta" onchange="filtrar()">
+  </div>
+  <div class="filter-group">
+    <label>Avisos</label>
+    <select id="f-avisos" onchange="filtrar()">
+      <option value="">Todos</option>
+      <option value="si">Solo con avisos</option>
+      <option value="no">Sin avisos</option>
+    </select>
+  </div>
+  <button class="btn btn-outline" onclick="limpiarFiltros()">✕ Limpiar</button>
+  <button class="btn btn-primary" onclick="cargarDatos()">↻ Actualizar</button>
+</div>
+
+<div class="stats-bar">
+  <div class="stat"><div class="stat-label">Días</div><div class="stat-value orange" id="stat-dias">—</div></div>
+  <div class="stat"><div class="stat-label">Horas totales</div><div class="stat-value green" id="stat-horas">—</div></div>
+  <div class="stat"><div class="stat-label">Media diaria</div><div class="stat-value blue" id="stat-media">—</div></div>
+  <div class="stat"><div class="stat-label">Avisos</div><div class="stat-value yellow" id="stat-avisos">—</div></div>
+</div>
+
+<div id="content-dias">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('fecha')">Fecha</th>
+          <th onclick="sortBy('operario')">Operario</th>
+          <th onclick="sortBy('entrada')">Entrada</th>
+          <th onclick="sortBy('salida')">Salida</th>
+          <th onclick="sortBy('pausa_min')">Pausa</th>
+          <th onclick="sortBy('horas_dec')">Horas</th>
+          <th>Fichajes</th>
+          <th>Avisos</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-body">
+        <tr><td colspan="8"><div class="status-msg"><span>⏳</span>Cargando datos...</div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="content-operarios" style="display:none">
+  <div class="resumen-grid" id="resumen-grid"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://yinncmybxzxdkmwjnahu.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlpbm5jbXlieHp4ZGttd2puYWh1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2MzY5MjEsImV4cCI6MjA5MTIxMjkyMX0.Ry9YwM0KBKU4Sgmeavhki0tCC230OmHXQJGD-3eoh7s';
+
+const IPAR_LAT = 43.27376;
+const IPAR_LNG = -2.32873;
+const UMBRAL_M = 500;
+
+let allData = [];      // registros raw de Supabase
+let diasData = [];     // procesados por (fecha, operario)
+let filteredDias = [];
+let currentView = 'dias';
+let sortCol = 'fecha';
+let sortDir = 'desc';
+
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371000;
+  const p1 = lat1 * Math.PI/180, p2 = lat2 * Math.PI/180;
+  const dp = (lat2-lat1)*Math.PI/180, dl = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dp/2)**2 + Math.cos(p1)*Math.cos(p2)*Math.sin(dl/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function lugarFichaje(lat, lng) {
+  if (!lat || !lng) return { texto: '—', tipo: 'nd', url: null };
+  const dist = haversine(parseFloat(lat), parseFloat(lng), IPAR_LAT, IPAR_LNG);
+  if (dist <= UMBRAL_M) return { texto: 'Ipar Spindle', tipo: 'ipar', url: null };
+  return { texto: 'Fuera', tipo: 'fuera', url: `https://www.google.com/maps?q=${lat},${lng}` };
+}
+
+function horaToMin(h) {
+  if (!h) return null;
+  const p = h.split(':');
+  return parseInt(p[0])*60 + parseInt(p[1]);
+}
+
+function minToHHMM(min) {
+  if (min === null || min === undefined) return '—';
+  const h = Math.floor(Math.abs(min)/60), m = Math.abs(min)%60;
+  return `${h}h ${String(m).padStart(2,'0')}m`;
+}
+
+function procesarDias(raw) {
+  const map = {};
+  raw.forEach(r => {
+    const key = `${r.fecha}__${r.operario}`;
+    if (!map[key]) map[key] = { fecha: r.fecha, operario: r.operario, acciones: {} };
+    map[key].acciones[r.accion] = { hora: r.hora, lat: r.lat, lng: r.lng };
+  });
+
+  return Object.values(map).map(d => {
+    const a = d.acciones;
+    const entrada    = a['entrada']       || null;
+    const salida     = a['salida']        || null;
+    const iniPausa   = a['inicio_pausa']  || null;
+    const finPausa   = a['fin_pausa']     || null;
+
+    const mEntrada  = entrada  ? horaToMin(entrada.hora)  : null;
+    const mSalida   = salida   ? horaToMin(salida.hora)   : null;
+    const mIniPausa = iniPausa ? horaToMin(iniPausa.hora) : null;
+    const mFinPausa = finPausa ? horaToMin(finPausa.hora) : null;
+
+    let pausaMin = 0;
+    if (mIniPausa !== null && mFinPausa !== null) {
+      pausaMin = Math.max(0, mFinPausa - mIniPausa);
+    }
+
+    let horasDec = null;
+    if (mEntrada !== null && mSalida !== null) {
+      horasDec = (mSalida - mEntrada - pausaMin) / 60;
+    }
+
+    const avisos = [];
+    if (!salida)   avisos.push('Sin salida');
+    if (!entrada)  avisos.push('Sin entrada');
+    if (iniPausa && !finPausa) avisos.push('Pausa sin cerrar');
+
+    return {
+      fecha:      d.fecha,
+      operario:   d.operario,
+      entrada:    entrada?.hora  || null,
+      salida:     salida?.hora   || null,
+      ini_pausa:  iniPausa?.hora || null,
+      fin_pausa:  finPausa?.hora || null,
+      pausa_min:  pausaMin,
+      horas_dec:  horasDec,
+      avisos,
+      lug_entrada:   entrada  ? lugarFichaje(entrada.lat,  entrada.lng)  : null,
+      lug_salida:    salida   ? lugarFichaje(salida.lat,   salida.lng)   : null,
+      lug_ini_pausa: iniPausa ? lugarFichaje(iniPausa.lat, iniPausa.lng) : null,
+      lug_fin_pausa: finPausa ? lugarFichaje(finPausa.lat, finPausa.lng) : null,
+    };
+  });
+}
+
+async function cargarDatos() {
+  document.getElementById('tabla-body').innerHTML =
+    `<tr><td colspan="8"><div class="status-msg"><span>⏳</span>Cargando...</div></td></tr>`;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/fichajes?select=*&order=fecha.desc,hora.asc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    allData = await res.json();
+    diasData = procesarDias(allData);
+
+    // Poblar select operarios
+    const operarios = [...new Set(allData.map(r => r.operario))].sort();
+    const sel = document.getElementById('f-operario');
+    sel.innerHTML = '<option value="">Todos</option>';
+    operarios.forEach(op => {
+      const o = document.createElement('option');
+      o.value = op; o.textContent = op;
+      sel.appendChild(o);
+    });
+
+    filtrar();
+  } catch(e) {
+    document.getElementById('tabla-body').innerHTML =
+      `<tr><td colspan="8"><div class="status-msg"><span>⚠️</span>Error al conectar<br><small style="color:var(--red)">${e.message}</small></div></td></tr>`;
+  }
+}
+
+function filtrar() {
+  const fOp     = document.getElementById('f-operario').value;
+  const fDesde  = document.getElementById('f-desde').value;
+  const fHasta  = document.getElementById('f-hasta').value;
+  const fAvisos = document.getElementById('f-avisos').value;
+
+  filteredDias = diasData.filter(d => {
+    if (fOp    && d.operario !== fOp) return false;
+    if (fDesde && d.fecha < fDesde)   return false;
+    if (fHasta && d.fecha > fHasta)   return false;
+    if (fAvisos === 'si' && d.avisos.length === 0) return false;
+    if (fAvisos === 'no' && d.avisos.length > 0)   return false;
+    return true;
+  });
+
+  actualizarStats();
+  if (currentView === 'dias') renderTabla();
+  else renderResumen();
+}
+
+function actualizarStats() {
+  const totalMin = filteredDias.reduce((a, d) => a + (d.horas_dec ? d.horas_dec*60 : 0), 0);
+  const conHoras = filteredDias.filter(d => d.horas_dec !== null);
+  const mediaMin = conHoras.length ? totalMin / conHoras.length : 0;
+  const avisos   = filteredDias.filter(d => d.avisos.length > 0).length;
+
+  document.getElementById('stat-dias').textContent   = filteredDias.length;
+  document.getElementById('stat-horas').textContent  = minToHHMM(Math.round(totalMin));
+  document.getElementById('stat-media').textContent  = minToHHMM(Math.round(mediaMin));
+  document.getElementById('stat-avisos').textContent = avisos;
+}
+
+function sortBy(col) {
+  if (sortCol === col) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  else { sortCol = col; sortDir = 'asc'; }
+  filtrar();
+}
+
+function lugarHtml(lugar) {
+  if (!lugar) return '<span class="lugar-badge lugar-nd">—</span>';
+  if (lugar.tipo === 'ipar')  return `<span class="lugar-badge lugar-ipar">Ipar</span>`;
+  if (lugar.tipo === 'fuera') return `<a href="${lugar.url}" target="_blank" class="lugar-badge lugar-fuera">Fuera ↗</a>`;
+  return '<span class="lugar-badge lugar-nd">—</span>';
+}
+
+function renderTabla() {
+  const sorted = [...filteredDias].sort((a, b) => {
+    let va = a[sortCol] ?? '', vb = b[sortCol] ?? '';
+    if (typeof va === 'string') va = va.toLowerCase();
+    if (typeof vb === 'string') vb = vb.toLowerCase();
+    return sortDir === 'asc' ? (va < vb ? -1 : va > vb ? 1 : 0) : (va > vb ? -1 : va < vb ? 1 : 0);
+  });
+
+  if (!sorted.length) {
+    document.getElementById('tabla-body').innerHTML =
+      `<tr><td colspan="8"><div class="status-msg"><span>📭</span>No hay datos con estos filtros</div></td></tr>`;
+    return;
+  }
+
+  document.getElementById('tabla-body').innerHTML = sorted.map(d => {
+    const hasAviso = d.avisos.length > 0;
+    const fichajes = [
+      d.lug_entrada   ? `E:${lugarHtml(d.lug_entrada)}`   : '',
+      d.lug_ini_pausa ? `P↓:${lugarHtml(d.lug_ini_pausa)}` : '',
+      d.lug_fin_pausa ? `P↑:${lugarHtml(d.lug_fin_pausa)}` : '',
+      d.lug_salida    ? `S:${lugarHtml(d.lug_salida)}`    : '',
+    ].filter(Boolean).join(' ');
+
+    return `<tr class="${hasAviso ? 'fila-aviso' : ''}">
+      <td class="fecha-cell">${d.fecha}</td>
+      <td><span class="operario-badge">${d.operario}</span></td>
+      <td class="hora-cell">${d.entrada || '—'}</td>
+      <td class="hora-cell">${d.salida  || '—'}</td>
+      <td class="fecha-cell">${d.pausa_min ? minToHHMM(d.pausa_min) : '—'}</td>
+      <td class="horas-cell">${d.horas_dec !== null ? minToHHMM(Math.round(d.horas_dec*60)) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td style="font-size:12px">${fichajes}</td>
+      <td>${d.avisos.map(a => `<span class="aviso-badge">${a}</span>`).join(' ') || ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderResumen() {
+  const opMap = {};
+  filteredDias.forEach(d => {
+    if (!opMap[d.operario]) opMap[d.operario] = { nombre: d.operario, dias: [], totalMin: 0, avisos: 0, fuera: 0 };
+    const o = opMap[d.operario];
+    o.dias.push(d);
+    if (d.horas_dec !== null) o.totalMin += d.horas_dec * 60;
+    if (d.avisos.length) o.avisos++;
+    [d.lug_entrada, d.lug_salida, d.lug_ini_pausa, d.lug_fin_pausa].forEach(l => {
+      if (l && l.tipo === 'fuera') o.fuera++;
+    });
+  });
+
+  const ops = Object.values(opMap).sort((a,b) => b.totalMin - a.totalMin);
+  if (!ops.length) {
+    document.getElementById('resumen-grid').innerHTML =
+      `<div class="status-msg" style="grid-column:1/-1"><span>📭</span>No hay datos</div>`;
+    return;
+  }
+
+  const maxMin = Math.max(...ops.flatMap(o => o.dias.map(d => d.horas_dec ? d.horas_dec*60 : 0)));
+
+  document.getElementById('resumen-grid').innerHTML = ops.map(o => {
+    const diasConHoras = o.dias.filter(d => d.horas_dec !== null);
+    const media = diasConHoras.length ? o.totalMin / diasConHoras.length : 0;
+
+    // Últimos 7 días con datos
+    const ultimos = [...o.dias].sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0, 7).reverse();
+    const barras = ultimos.map(d => {
+      const min = d.horas_dec ? Math.round(d.horas_dec*60) : 0;
+      const pct = maxMin ? (min/maxMin*100) : 0;
+      const warn = d.avisos.length > 0;
+      return `<div class="chart-bar-wrap">
+        <span class="chart-day">${d.fecha.substring(5)}</span>
+        <div class="chart-bar-bg"><div class="chart-bar-fill ${warn?'warn':''}" style="width:${pct}%"></div></div>
+        <span class="chart-val">${min ? minToHHMM(min) : '⚠'}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="operario-card">
+      <div class="card-header">
+        <div class="card-nombre">${o.nombre}</div>
+        <div>
+          <div class="card-total">${minToHHMM(Math.round(o.totalMin))}</div>
+          <div class="card-total-label">${o.dias.length} días</div>
+        </div>
+      </div>
+      <div class="card-stats">
+        <div class="card-stat">
+          <div class="card-stat-label">Media diaria</div>
+          <div class="card-stat-val">${minToHHMM(Math.round(media))}</div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-label">Días completos</div>
+          <div class="card-stat-val">${diasConHoras.length}</div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-label">Avisos</div>
+          <div class="card-stat-val ${o.avisos > 0 ? 'warn' : ''}">${o.avisos}</div>
+        </div>
+        <div class="card-stat">
+          <div class="card-stat-label">Fichajes fuera</div>
+          <div class="card-stat-val ${o.fuera > 0 ? 'red' : ''}">${o.fuera}</div>
+        </div>
+      </div>
+      ${barras ? `<div class="card-chart"><div class="chart-label">Últimos días</div>${barras}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function setView(v, btn) {
+  currentView = v;
+  document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('content-dias').style.display       = v === 'dias'      ? '' : 'none';
+  document.getElementById('content-operarios').style.display  = v === 'operarios' ? '' : 'none';
+  filtrar();
+}
+
+function limpiarFiltros() {
+  ['f-desde','f-hasta'].forEach(id => document.getElementById(id).value = '');
+  ['f-operario','f-avisos'].forEach(id => document.getElementById(id).value = '');
+  filtrar();
+}
+
+function exportarExcel() {
+  if (!filteredDias.length) { alert('No hay datos para exportar'); return; }
+
+  // Hoja 1: Detalle por día
+  const detalle = filteredDias.map(d => ({
+    'Fecha':          d.fecha,
+    'Operario':       d.operario,
+    'Entrada':        d.entrada  || '',
+    'Salida':         d.salida   || '',
+    'Inicio pausa':   d.ini_pausa || '',
+    'Fin pausa':      d.fin_pausa || '',
+    'Pausa':          d.pausa_min ? minToHHMM(d.pausa_min) : '',
+    'Horas trabajadas': d.horas_dec !== null ? minToHHMM(Math.round(d.horas_dec*60)) : '',
+    'Horas decimales':  d.horas_dec !== null ? d.horas_dec.toFixed(2) : '',
+    'Fichaje entrada':  d.lug_entrada  ? d.lug_entrada.texto  : '',
+    'Fichaje salida':   d.lug_salida   ? d.lug_salida.texto   : '',
+    'Avisos':           d.avisos.join(', '),
+  }));
+
+  // Hoja 2: Resumen por operario
+  const opMap = {};
+  filteredDias.forEach(d => {
+    if (!opMap[d.operario]) opMap[d.operario] = { operario: d.operario, totalMin: 0, dias: 0, diasCompletos: 0, avisos: 0, fuera: 0 };
+    const o = opMap[d.operario];
+    o.dias++;
+    if (d.horas_dec !== null) { o.totalMin += d.horas_dec*60; o.diasCompletos++; }
+    if (d.avisos.length) o.avisos++;
+    [d.lug_entrada, d.lug_salida].forEach(l => { if (l && l.tipo === 'fuera') o.fuera++; });
+  });
+
+  const resumen = Object.values(opMap).map(o => ({
+    'Operario':         o.operario,
+    'Total horas':      minToHHMM(Math.round(o.totalMin)),
+    'Horas decimales':  (o.totalMin/60).toFixed(2),
+    'Días totales':     o.dias,
+    'Días completos':   o.diasCompletos,
+    'Días con avisos':  o.avisos,
+    'Fichajes fuera':   o.fuera,
+  }));
+
+  const wb = XLSX.utils.book_new();
+  const ws1 = XLSX.utils.json_to_sheet(detalle);
+  ws1['!cols'] = [12,10,8,8,12,12,8,14,14,20,20,25].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws1, 'Detalle por día');
+
+  const ws2 = XLSX.utils.json_to_sheet(resumen);
+  ws2['!cols'] = [12,12,14,12,12,14,14].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb, ws2, 'Resumen por operario');
+
+  XLSX.writeFile(wb, `IPAR_Fichajes_${new Date().toISOString().substring(0,10)}.xlsx`);
+}
+
+cargarDatos();
+</script>
+</body>
+</html>
