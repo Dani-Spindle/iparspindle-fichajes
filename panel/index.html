@@ -154,6 +154,126 @@
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── BOTÓN AÑADIR FICHAJE ─────────────────────────────── */
+  .btn-add {
+    background: var(--accent); color: white;
+    border: none; border-radius: 4px; cursor: pointer;
+    padding: 9px 18px; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 14px; letter-spacing: 1px;
+    text-transform: uppercase; transition: all 0.2s;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .btn-add:hover { background: #d4441e; transform: translateY(-1px); }
+
+  .btn-edit {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 3px; cursor: pointer; padding: 3px 8px;
+    font-family: 'Barlow Condensed', sans-serif; font-size: 11px;
+    letter-spacing: 0.5px; transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .btn-edit:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ── MODAL OVERLAY ───────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(4px);
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; width: 520px; max-width: 95vw; max-height: 90vh;
+    overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    animation: modalIn 0.18s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: translateY(-16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+  }
+  .modal-title { font-size: 18px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text); }
+  .modal-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; letter-spacing: 0.5px; }
+  .modal-close {
+    background: none; border: none; color: var(--muted); cursor: pointer;
+    font-size: 20px; padding: 4px 8px; transition: color 0.15s; line-height: 1;
+  }
+  .modal-close:hover { color: var(--accent); }
+
+  .modal-body { padding: 20px 24px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .form-row.single { grid-template-columns: 1fr; }
+  .form-row.triple { grid-template-columns: 1fr 1fr 1fr; }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label {
+    font-size: 10px; letter-spacing: 1.5px; color: var(--muted);
+    font-weight: 600; text-transform: uppercase;
+  }
+  .form-input {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text);
+    padding: 9px 12px; font-family: 'DM Mono', monospace; font-size: 13px;
+    border-radius: 4px; outline: none; transition: border-color 0.2s; width: 100%;
+  }
+  .form-input:focus { border-color: var(--accent); }
+  .form-input:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .form-section-title {
+    font-size: 11px; letter-spacing: 1.5px; color: var(--accent); font-weight: 700;
+    text-transform: uppercase; margin: 18px 0 10px; padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .toggle-pausa {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer;
+  }
+  .toggle-pausa input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+  .toggle-pausa span { font-size: 13px; color: var(--muted); letter-spacing: 0.5px; }
+
+  .modal-footer {
+    display: flex; justify-content: flex-end; gap: 10px;
+    padding: 16px 24px 20px; border-top: 1px solid var(--border);
+  }
+
+  .btn-cancel {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 4px; cursor: pointer; padding: 9px 20px;
+    font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px;
+    letter-spacing: 1px; text-transform: uppercase; transition: all 0.2s;
+  }
+  .btn-cancel:hover { border-color: var(--text); color: var(--text); }
+
+  .btn-save {
+    background: var(--accent); color: white; border: none; border-radius: 4px;
+    cursor: pointer; padding: 9px 24px; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700; font-size: 14px; letter-spacing: 1px; text-transform: uppercase;
+    transition: all 0.2s; display: flex; align-items: center; gap: 7px;
+  }
+  .btn-save:hover { background: #d4441e; }
+  .btn-save:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .msg-info {
+    background: rgba(52,152,219,0.1); border: 1px solid rgba(52,152,219,0.3);
+    border-radius: 4px; padding: 10px 14px; font-size: 12px; color: var(--blue);
+    margin-bottom: 14px; letter-spacing: 0.3px;
+  }
+  .msg-error {
+    background: rgba(231,76,60,0.1); border: 1px solid rgba(231,76,60,0.3);
+    border-radius: 4px; padding: 10px 14px; font-size: 12px; color: var(--red);
+    margin-bottom: 14px; letter-spacing: 0.3px;
+  }
+  .msg-success {
+    background: rgba(46,204,113,0.1); border: 1px solid rgba(46,204,113,0.3);
+    border-radius: 4px; padding: 10px 14px; font-size: 12px; color: var(--green);
+    margin-bottom: 14px; letter-spacing: 0.3px;
+  }
 </style>
 </head>
 <body>
@@ -166,6 +286,7 @@
       <button class="view-btn" onclick="setView('operarios', this)">Por Operario</button>
     </div>
     <button class="btn btn-excel" onclick="exportarExcel()">⬇ Exportar Excel</button>
+    <button class="btn-add" onclick="abrirModalNuevo()">+ Fichaje Manual</button>
   </div>
 </header>
 
@@ -428,7 +549,10 @@ function renderTabla() {
       <td class="fecha-cell">${d.pausa_min ? minToHHMM(d.pausa_min) : '—'}</td>
       <td class="horas-cell">${d.horas_dec !== null ? minToHHMM(Math.round(d.horas_dec*60)) : '<span style="color:var(--muted)">—</span>'}</td>
       <td style="font-size:12px">${fichajes}</td>
-      <td>${d.avisos.map(a => `<span class="aviso-badge">${a}</span>`).join(' ') || ''}</td>
+      <td>
+        ${d.avisos.map(a => `<span class="aviso-badge">${a}</span>`).join(' ') || ''}
+        <button class="btn-edit" onclick='abrirModalEditar(${JSON.stringify(d)})' title="Editar fichaje">✎ Editar</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -571,6 +695,329 @@ function exportarExcel() {
 }
 
 cargarDatos();
+</script>
+
+<!-- ════════════════════════════════════════════════════════════
+     MODAL FICHAJE MANUAL
+════════════════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-overlay" onclick="cerrarModalSiOverlay(event)">
+  <div class="modal" id="modal-fichaje">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="modal-titulo">Nuevo Fichaje Manual</div>
+        <div class="modal-subtitle" id="modal-subtitulo">Registra un fichaje que no se realizó desde la app</div>
+      </div>
+      <button class="modal-close" onclick="cerrarModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="modal-msg"></div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Operario *</label>
+          <select class="form-input" id="m-operario"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha *</label>
+          <input type="date" class="form-input" id="m-fecha">
+        </div>
+      </div>
+
+      <div class="form-section-title">⏰ Horario</div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Entrada</label>
+          <input type="time" class="form-input" id="m-entrada" step="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Salida</label>
+          <input type="time" class="form-input" id="m-salida" step="1">
+        </div>
+      </div>
+
+      <label class="toggle-pausa">
+        <input type="checkbox" id="m-con-pausa" onchange="togglePausa(this.checked)">
+        <span>Incluir pausa / descanso</span>
+      </label>
+
+      <div id="m-pausa-fields" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Inicio pausa</label>
+            <input type="time" class="form-input" id="m-ini-pausa" step="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Fin pausa</label>
+            <input type="time" class="form-input" id="m-fin-pausa" step="1">
+          </div>
+        </div>
+      </div>
+
+      <div class="form-section-title">📍 Motivo del fichaje manual</div>
+
+      <div class="form-row single">
+        <div class="form-group">
+          <label class="form-label">Motivo / Nota</label>
+          <input type="text" class="form-input" id="m-motivo" placeholder="Ej: Olvidó fichar la salida, trabajó desde oficina externa…">
+        </div>
+      </div>
+
+      <div id="m-preview" style="display:none;margin-top:10px">
+        <div class="form-section-title">👁 Vista previa</div>
+        <div id="m-preview-content" style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.8"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="btn-save" id="btn-guardar" onclick="guardarFichaje()">
+        <span id="btn-guardar-txt">💾 Guardar fichaje</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Estado del modal ─────────────────────────────────────
+let modalMode = 'nuevo'; // 'nuevo' | 'editar'
+let modalDiaEditar = null;
+
+function abrirModalNuevo() {
+  modalMode = 'nuevo';
+  modalDiaEditar = null;
+  document.getElementById('modal-titulo').textContent = 'Nuevo Fichaje Manual';
+  document.getElementById('modal-subtitulo').textContent = 'Registra un fichaje que no se realizó desde la app';
+  document.getElementById('btn-guardar-txt').textContent = '💾 Guardar fichaje';
+  resetModal();
+  // Fecha por defecto: hoy
+  document.getElementById('m-fecha').value = new Date().toISOString().substring(0,10);
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function abrirModalEditar(dia) {
+  modalMode = 'editar';
+  modalDiaEditar = dia;
+  document.getElementById('modal-titulo').textContent = 'Editar Fichaje';
+  document.getElementById('modal-subtitulo').textContent = `${dia.operario} · ${dia.fecha}`;
+  document.getElementById('btn-guardar-txt').textContent = '✔ Actualizar fichaje';
+  resetModal();
+
+  document.getElementById('m-operario').value = dia.operario;
+  document.getElementById('m-fecha').value = dia.fecha;
+  // Deshabilitar cambiar operario/fecha en edición
+  document.getElementById('m-operario').disabled = true;
+  document.getElementById('m-fecha').disabled = true;
+
+  if (dia.entrada) document.getElementById('m-entrada').value = dia.entrada.substring(0,5);
+  if (dia.salida)  document.getElementById('m-salida').value  = dia.salida.substring(0,5);
+
+  if (dia.ini_pausa || dia.fin_pausa) {
+    document.getElementById('m-con-pausa').checked = true;
+    togglePausa(true);
+    if (dia.ini_pausa) document.getElementById('m-ini-pausa').value = dia.ini_pausa.substring(0,5);
+    if (dia.fin_pausa) document.getElementById('m-fin-pausa').value = dia.fin_pausa.substring(0,5);
+  }
+
+  calcularPreview();
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function resetModal() {
+  document.getElementById('modal-msg').innerHTML = '';
+  document.getElementById('m-operario').disabled = false;
+  document.getElementById('m-fecha').disabled = false;
+  document.getElementById('m-entrada').value = '';
+  document.getElementById('m-salida').value = '';
+  document.getElementById('m-ini-pausa').value = '';
+  document.getElementById('m-fin-pausa').value = '';
+  document.getElementById('m-motivo').value = '';
+  document.getElementById('m-con-pausa').checked = false;
+  document.getElementById('m-pausa-fields').style.display = 'none';
+  document.getElementById('m-preview').style.display = 'none';
+
+  // Poblar operarios desde los ya cargados
+  const sel = document.getElementById('m-operario');
+  const operarios = [...new Set(allData.map(r => r.operario))].sort();
+  sel.innerHTML = '<option value="">— Selecciona —</option>';
+  operarios.forEach(op => {
+    const o = document.createElement('option');
+    o.value = op; o.textContent = op;
+    sel.appendChild(o);
+  });
+
+  // Listeners live para preview
+  ['m-entrada','m-salida','m-ini-pausa','m-fin-pausa'].forEach(id => {
+    document.getElementById(id).oninput = calcularPreview;
+  });
+}
+
+function togglePausa(on) {
+  document.getElementById('m-pausa-fields').style.display = on ? '' : 'none';
+  if (!on) {
+    document.getElementById('m-ini-pausa').value = '';
+    document.getElementById('m-fin-pausa').value = '';
+  }
+  calcularPreview();
+}
+
+function calcularPreview() {
+  const entrada = document.getElementById('m-entrada').value;
+  const salida  = document.getElementById('m-salida').value;
+  const iniP    = document.getElementById('m-ini-pausa').value;
+  const finP    = document.getElementById('m-fin-pausa').value;
+
+  if (!entrada && !salida) {
+    document.getElementById('m-preview').style.display = 'none';
+    return;
+  }
+
+  let lines = [];
+  let horasMin = null;
+  if (entrada) lines.push(`Entrada: <span style="color:var(--text)">${entrada}</span>`);
+  if (salida)  lines.push(`Salida:  <span style="color:var(--text)">${salida}</span>`);
+  if (iniP)    lines.push(`Inicio pausa: <span style="color:var(--text)">${iniP}</span>`);
+  if (finP)    lines.push(`Fin pausa: <span style="color:var(--text)">${finP}</span>`);
+
+  if (entrada && salida) {
+    const mE = horaToMin2(entrada), mS = horaToMin2(salida);
+    let pausa = 0;
+    if (iniP && finP) pausa = Math.max(0, horaToMin2(finP) - horaToMin2(iniP));
+    horasMin = mS - mE - pausa;
+    const h = Math.floor(Math.abs(horasMin)/60), m = Math.abs(horasMin)%60;
+    const color = horasMin < 0 ? 'var(--red)' : 'var(--green)';
+    lines.push(`<strong style="color:${color}">Total: ${h}h ${String(m).padStart(2,'0')}m</strong>`);
+  }
+
+  document.getElementById('m-preview-content').innerHTML = lines.join('<br>');
+  document.getElementById('m-preview').style.display = '';
+}
+
+function horaToMin2(h) {
+  const p = h.split(':');
+  return parseInt(p[0])*60 + parseInt(p[1]);
+}
+
+function cerrarModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+function cerrarModalSiOverlay(e) {
+  if (e.target === document.getElementById('modal-overlay')) cerrarModal();
+}
+
+function showMsg(tipo, texto) {
+  document.getElementById('modal-msg').innerHTML = `<div class="msg-${tipo}">${texto}</div>`;
+}
+
+async function guardarFichaje() {
+  const operario = document.getElementById('m-operario').value;
+  const fecha    = document.getElementById('m-fecha').value;
+  const entrada  = document.getElementById('m-entrada').value;
+  const salida   = document.getElementById('m-salida').value;
+  const iniP     = document.getElementById('m-ini-pausa').value;
+  const finP     = document.getElementById('m-fin-pausa').value;
+  const motivo   = document.getElementById('m-motivo').value.trim();
+
+  // Validaciones básicas
+  if (!operario) { showMsg('error', '⚠ Selecciona un operario.'); return; }
+  if (!fecha)    { showMsg('error', '⚠ Indica la fecha.'); return; }
+  if (!entrada && !salida) { showMsg('error', '⚠ Debes introducir al menos la entrada o la salida.'); return; }
+
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true;
+  document.getElementById('btn-guardar-txt').textContent = '⏳ Guardando…';
+  showMsg('info', 'Guardando cambios en Supabase…');
+
+  try {
+    // Construir los registros a insertar/actualizar
+    const acciones = [];
+    if (entrada)  acciones.push({ accion: 'entrada',       hora: entrada + ':00' });
+    if (salida)   acciones.push({ accion: 'salida',        hora: salida  + ':00' });
+    if (iniP)     acciones.push({ accion: 'inicio_pausa',  hora: iniP    + ':00' });
+    if (finP)     acciones.push({ accion: 'fin_pausa',     hora: finP    + ':00' });
+
+    // Si es edición, borrar TODOS los registros de ese (fecha, operario) y reinsertar
+    if (modalMode === 'editar') {
+      const delUrl = `${SUPABASE_URL}/rest/v1/fichajes?fecha=eq.${fecha}&operario=eq.${encodeURIComponent(operario)}`;
+      const delRes = await fetch(delUrl, {
+          method: 'DELETE',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          }
+        }
+      );
+      // 200 o 204 son OK; 404 también (no había nada, seguimos)
+      if (!delRes.ok && delRes.status !== 404) {
+        throw new Error('Error al borrar registros existentes: ' + await delRes.text());
+      }
+    }
+
+    const tsRef = allData.find(r => r.ts !== undefined && r.ts !== null);
+    const tsEjemplo = tsRef?.ts;
+    const tsEsBigint = typeof tsEjemplo === 'number' || (typeof tsEjemplo === 'string' && /^\d{10,}$/.test(tsEjemplo));
+
+    function buildTs(fechaStr, horaStr) {
+      // horaStr puede ser "HH:MM" o "HH:MM:SS" — normalizar a "HH:MM:SS"
+      const horaNorm = horaStr.length === 5 ? horaStr + ':00' : horaStr;
+      // Construir como fecha local explícita para evitar NaN en Safari/Firefox
+      const [y, mo, d]  = fechaStr.split('-').map(Number);
+      const [h, mi, s]  = horaNorm.split(':').map(Number);
+      return new Date(y, mo - 1, d, h, mi, s || 0).getTime();
+    }
+
+    const payload = acciones.map(a => ({
+      fecha,
+      operario,
+      accion: a.accion,
+      hora:   a.hora,
+      ts:     buildTs(fecha, a.hora),
+      lat:    IPAR_LAT.toString(),
+      lng:    IPAR_LNG.toString(),
+    }));
+
+    // Intento 1: con ts
+    let insRes = await fetch(`${SUPABASE_URL}/rest/v1/fichajes`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+      body: JSON.stringify(payload)
+    });
+
+    // Intento 2: si ts sigue fallando, probar el formato alternativo (bigint ↔ ISO)
+    if (!insRes.ok) {
+      const err1 = await insRes.text();
+      if (err1.includes('ts') || err1.includes('23502') || err1.includes('22P02')) {
+        const payload2 = payload.map(a => {
+          const iso = `${fecha}T${a.hora}`;
+          return { ...a, ts: tsEsBigint ? iso : new Date(iso).getTime() };
+        });
+        insRes = await fetch(`${SUPABASE_URL}/rest/v1/fichajes`, {
+          method: 'POST',
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+          body: JSON.stringify(payload2)
+        });
+        if (!insRes.ok) throw new Error(await insRes.text());
+      } else {
+        throw new Error(err1);
+      }
+    }
+
+    showMsg('success', `✔ Fichaje guardado correctamente para <strong>${operario}</strong> el <strong>${fecha}</strong>`);
+    document.getElementById('btn-guardar-txt').textContent = '✔ Guardado';
+
+    // Recargar datos tras 1.5s y cerrar modal
+    setTimeout(() => {
+      cerrarModal();
+      cargarDatos();
+    }, 1500);
+
+  } catch(e) {
+    showMsg('error', `⚠ Error al guardar: ${e.message}`);
+    btn.disabled = false;
+    document.getElementById('btn-guardar-txt').textContent = modalMode === 'editar' ? '✔ Actualizar fichaje' : '💾 Guardar fichaje';
+  }
+}
 </script>
 </body>
 </html>
