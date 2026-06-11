@@ -970,15 +970,20 @@ async function guardarFichaje() {
       return new Date(y, mo - 1, d, h, mi, s || 0).getTime();
     }
 
-    const payload = acciones.map(a => ({
-      fecha,
-      operario,
-      accion: a.accion,
-      hora:   a.hora,
-      ts:     buildTs(fecha, a.hora),
-      lat:    IPAR_LAT.toString(),
-      lng:    IPAR_LNG.toString(),
-    }));
+    // En edición manual no enviamos ts para evitar que un trigger recalcule hora en UTC
+    const tsValor = modalMode === 'editar' ? undefined : buildTs(fecha, acciones[0]?.hora || '00:00:00');
+    const payload = acciones.map(a => {
+      const row = {
+        fecha,
+        operario,
+        accion: a.accion,
+        hora:   a.hora,
+        lat:    IPAR_LAT.toString(),
+        lng:    IPAR_LNG.toString(),
+      };
+      if (modalMode !== 'editar') row.ts = buildTs(fecha, a.hora);
+      return row;
+    });
 
     // Intento 1: con ts
     let insRes = await fetch(`${SUPABASE_URL}/rest/v1/fichajes`, {
