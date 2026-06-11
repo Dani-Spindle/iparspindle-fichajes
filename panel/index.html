@@ -938,77 +938,65 @@ async function guardarFichaje() {
     if (iniP)     acciones.push({ accion: 'inicio_pausa',  hora: iniP    + ':00' });
     if (finP)     acciones.push({ accion: 'fin_pausa',     hora: finP    + ':00' });
 
-    // Si es edición, borrar TODOS los registros de ese (fecha, operario) y reinsertar
-    if (modalMode === 'editar') {
-      const delUrl = `${SUPABASE_URL}/rest/v1/fichajes?fecha=eq.${fecha}&operario=eq.${encodeURIComponent(operario)}`;
-      const delRes = await fetch(delUrl, {
-          method: 'DELETE',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          }
-        }
-      );
-      // 200 o 204 son OK; 404 también (no había nada, seguimos)
-      if (!delRes.ok && delRes.status !== 404) {
-        throw new Error('Error al borrar registros existentes: ' + await delRes.text());
-      }
-    }
-
-    const tsRef = allData.find(r => r.ts !== undefined && r.ts !== null);
-    const tsEjemplo = tsRef?.ts;
-    const tsEsBigint = typeof tsEjemplo === 'number' || (typeof tsEjemplo === 'string' && /^\d{10,}$/.test(tsEjemplo));
-
     function buildTs(fechaStr, horaStr) {
-      // horaStr puede ser "HH:MM" o "HH:MM:SS" — normalizar a "HH:MM:SS"
       const horaNorm = horaStr.length === 5 ? horaStr + ':00' : horaStr;
-      // Construir como fecha local explícita para evitar NaN en Safari/Firefox
-      const [y, mo, d]  = fechaStr.split('-').map(Number);
-      const [h, mi, s]  = horaNorm.split(':').map(Number);
+      const [y, mo, d] = fechaStr.split('-').map(Number);
+      const [h, mi, s] = horaNorm.split(':').map(Number);
       return new Date(y, mo - 1, d, h, mi, s || 0).getTime();
     }
 
-    // En edición manual no enviamos ts para evitar que un trigger recalcule hora en UTC
-    const tsValor = modalMode === 'editar' ? undefined : buildTs(fecha, acciones[0]?.hora || '00:00:00');
-    const payload = acciones.map(a => {
-      const row = {
-        fecha,
-        operario,
-        accion: a.accion,
-        hora:   a.hora,
-        lat:    IPAR_LAT.toString(),
-        lng:    IPAR_LNG.toString(),
-      };
-      if (modalMode !== 'editar') row.ts = buildTs(fecha, a.hora);
-      return row;
-    });
+    if (modalMode === 'editar') {
+      // EDICIÓN: usar PATCH para actualizar solo la hora, sin tocar ts
+      // Obtener registros existentes para este (fecha, operario)
+      const existRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/fichajes?fecha=eq.${fecha}&operario=eq.${encodeURIComponent(operario)}&select=id,accion`,
+        { headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` } }
+      );
+      const existentes = await existRes.json();
+      const existMap = {};
+      (existentes || []).forEach(r => { existMap[r.accion] = r.id; });
 
-    // Intento 1: con ts
-    let insRes = await fetch(`${SUPABASE_URL}/rest/v1/fichajes`, {
-      method: 'POST',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-      body: JSON.stringify(payload)
-    });
+      const accionesNecesarias = new Set(acciones.map(a => a.accion));
 
-    // Intento 2: si ts sigue fallando, probar el formato alternativo (bigint ↔ ISO)
-    if (!insRes.ok) {
-      const err1 = await insRes.text();
-      if (err1.includes('ts') || err1.includes('23502') || err1.includes('22P02')) {
-        const payload2 = payload.map(a => {
-          const iso = `${fecha}T${a.hora}`;
-          return { ...a, ts: tsEsBigint ? iso : new Date(iso).getTime() };
-        });
-        insRes = await fetch(`${SUPABASE_URL}/rest/v1/fichajes`, {
-          method: 'POST',
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
-          body: JSON.stringify(payload2)
-        });
-        if (!insRes.ok) throw new Error(await insRes.text());
-      } else {
-        throw new Error(err1);
+      // PATCH los que existen, POST los nuevos, DELETE los que ya no hacen falta
+      for (const a of acciones) {
+        if (existMap[a.accion]) {
+          // PATCH solo hora (sin ts para no triggear recálculos)
+          const r = await fetch(
+            `${SUPABASE_URL}/rest/v1/fichajes?id=eq.${existMap[a.accion]}`,
+            { method: 'PATCH', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+              body: JSON.stringify({ hora: a.hora }) }
+          );
+          if (!r.ok) throw new Error('Error PATCH ' + a.accion + ': ' + await r.text());
+        } else {
+          // POST nuevo registro
+          const r = await fetch(`${SUPABASE_URL}/rest/v1/fichajes`,
+            { method: 'POST', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+              body: JSON.stringify({ fecha, operario, accion: a.accion, hora: a.hora, ts: buildTs(fecha, a.hora), lat: IPAR_LAT.toString(), lng: IPAR_LNG.toString() }) }
+          );
+          if (!r.ok) throw new Error('Error POST ' + a.accion + ': ' + await r.text());
+        }
       }
+      // Borrar acciones que ya no existen (ej: se quitó la pausa)
+      for (const accion of Object.keys(existMap)) {
+        if (!accionesNecesarias.has(accion)) {
+          await fetch(`${SUPABASE_URL}/rest/v1/fichajes?id=eq.${existMap[accion]}`,
+            { method: 'DELETE', headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Prefer': 'return=minimal' } }
+          );
+        }
+      }
+    } else {
+      // NUEVO FICHAJE: insertar con ts
+      const payload = acciones.map(a => ({
+        fecha, operario, accion: a.accion, hora: a.hora,
+        ts: buildTs(fecha, a.hora), lat: IPAR_LAT.toString(), lng: IPAR_LNG.toString(),
+      }));
+      const insRes = await fetch(`${SUPABASE_URL}/rest/v1/fichajes`, {
+        method: 'POST',
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+        body: JSON.stringify(payload)
+      });
+      if (!insRes.ok) throw new Error(await insRes.text());
     }
 
     showMsg('success', `✔ Fichaje guardado correctamente para <strong>${operario}</strong> el <strong>${fecha}</strong>`);
