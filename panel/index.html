@@ -932,11 +932,18 @@ async function guardarFichaje() {
 
   try {
     // Construir los registros a insertar/actualizar
+    // <input type="time" step="1"> puede devolver "HH:MM" o "HH:MM:SS".
+    // Normalizamos siempre a "HH:MM:SS" para no generar "HH:MM:SS:00".
+    const normHora = v => {
+      const [h = '00', mi = '00', s = '00'] = String(v).split(':');
+      return `${h.padStart(2,'0')}:${mi.padStart(2,'0')}:${s.padStart(2,'0')}`;
+    };
+
     const acciones = [];
-    if (entrada)  acciones.push({ accion: 'entrada',       hora: entrada + ':00' });
-    if (salida)   acciones.push({ accion: 'salida',        hora: salida  + ':00' });
-    if (iniP)     acciones.push({ accion: 'inicio_pausa',  hora: iniP    + ':00' });
-    if (finP)     acciones.push({ accion: 'fin_pausa',     hora: finP    + ':00' });
+    if (entrada)  acciones.push({ accion: 'entrada',       hora: normHora(entrada) });
+    if (salida)   acciones.push({ accion: 'salida',        hora: normHora(salida) });
+    if (iniP)     acciones.push({ accion: 'inicio_pausa',  hora: normHora(iniP) });
+    if (finP)     acciones.push({ accion: 'fin_pausa',     hora: normHora(finP) });
 
     function buildTs(fechaStr, horaStr) {
       const horaNorm = horaStr.length === 5 ? horaStr + ':00' : horaStr;
@@ -1010,6 +1017,7 @@ async function guardarFichaje() {
 
   } catch(e) {
     showMsg('error', `⚠ Error al guardar: ${e.message}`);
+  } finally {
     btn.disabled = false;
     document.getElementById('btn-guardar-txt').textContent = modalMode === 'editar' ? '✔ Actualizar fichaje' : '💾 Guardar fichaje';
   }
